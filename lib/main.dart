@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:test5/scan_file.dart';
 
 void main() {
   runApp(const MyApp());
@@ -99,6 +101,16 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            ElevatedButton(
+              child: const Text('次へ'),
+              onPressed: () {
+                //ここに発火時の動作を記述をする
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ScanPage())
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -106,7 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'インクリメント',
         child: const Icon(Icons.add),
-      ), // このカンマは自動フォーマットを適用するために使われます。
+      ),// このカンマは自動フォーマットを適用するために使われます。
     );
   }
 }
