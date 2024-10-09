@@ -24,14 +24,14 @@ class _BottomTabPageState extends State<BottomTabPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('くがプリ'),
+        title: Text('ぷりくがぷりくが'),
       ),
       body: _pageWidgets.elementAt(_currentIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label:'設定'),
           BottomNavigationBarItem(icon: Icon(Icons.photo_album), label:'スキャン'),
-          BottomNavigationBarItem(icon: Icon(Icons.abc_rounded),label:'デバッグ')
+          BottomNavigationBarItem(icon: Icon(Icons.abc_rounded),label:'debug')
         ],
         currentIndex: _currentIndex,
         fixedColor: Colors.blueAccent,
