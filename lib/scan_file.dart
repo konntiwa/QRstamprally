@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:test5/main.dart';
-
+///test
 //QRコードを2回短時間でカメラ起動するとエラーが起きるのは仕様っぽい
 // QRコードをスキャンする画面を表示するウィジェット
 class ScanPage extends StatelessWidget {
