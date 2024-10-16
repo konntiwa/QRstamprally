@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:test5/widget/BottomTab.dart';
-
+//kuga test
 void main() {
   runApp(const MyApp());
 }
