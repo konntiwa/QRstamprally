@@ -1,54 +1,61 @@
-import'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:test5/auth.dart';
+import 'package:test5/register.dart';
 
-class SettingPage extends StatelessWidget {
-  const SettingPage({Key? key}) : super(key: key);
+class SettingPage extends StatefulWidget {
+  const SettingPage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<SettingPage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<SettingPage> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
+  var db = FirebaseFirestore.instance;
+  String firebasedata = "";
+  List<String> texts = [];
+  void firetest() async{
+    await db.collection("users").get().then((event) {
+      for (var doc in event.docs) {
+        print("${doc.id} => ${doc.data()}");
+        setState(() {
+          texts.add('${doc.data()}'.toString());
+          firebasedata += '${doc.data()}';
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),body: Center( // Wrap with Center for centering
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Column(
         children: [
-          // Theme Setting
-          ListTile(
-            title: const Text('Dark Theme'),
-            trailing: Switch(
-              value: false, // Replace with actual theme state
-              onChanged: (value) {
-                // Handle theme change
-              },
-            ),
-          ),
-          // Notification Setting
-          ListTile(
-            title: const Text('Notifications'),
-            trailing: Switch(
-              value: true, // Replacewith actual notification state
-              onChanged: (value) {
-                // Handle notification change
-              },
-            ),
-          ),
-          // Language Setting
-          ListTile(
-            title: const Text('Language'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // Navigate to language selection screen
-            },
-          ),
-          // About Section
-          ListTile(
-            title: const Text('About'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // Navigate to about screen
-            },
-          ),
+          ElevatedButton(onPressed:(){
+            Navigator.push(context, MaterialPageRoute(builder:(context) =>AuthPage()));
+          }, child: Text("ログインページ")),
+          ElevatedButton(onPressed:(){
+            Navigator.push(context, MaterialPageRoute(builder:(context)=>RegiPage()));
+          }, child: Text("登録ページ")),
         ],
       ),
-    ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: firetest,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

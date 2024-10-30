@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:test5/widget/BottomTab.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 //kuga test
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized(); //async await が時間かかるのでそのお知らせ？
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

@@ -15,7 +15,7 @@ class _BottomTabPageState extends State<BottomTabPage> {
 
   int _currentIndex = 0;
   final _pageWidgets = [
-    SettingPage(),
+    SettingPage(title: '',),
     ScanPage(),
     DebugPage()
   ];
