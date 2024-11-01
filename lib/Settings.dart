@@ -44,10 +44,10 @@ class _MyHomePageState extends State<SettingPage> {
       body: Column(
         children: [
           ElevatedButton(onPressed:(){
-            Navigator.push(context, MaterialPageRoute(builder:(context) =>AuthPage()));
+            Navigator.push(context, MaterialPageRoute(builder:(context) =>LoginPage()));
           }, child: Text("ログインページ")),
           ElevatedButton(onPressed:(){
-            Navigator.push(context, MaterialPageRoute(builder:(context)=>RegiPage()));
+            Navigator.push(context, MaterialPageRoute(builder:(context)=>SignUpPage()));
           }, child: Text("登録ページ")),
         ],
       ),

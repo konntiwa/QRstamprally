@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:test5/auth.dart';
 import 'package:test5/widget/BottomTab.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -17,13 +19,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLogin = FirebaseAuth.instance.currentUser != null;
     return MaterialApp(  //アプリ全体の画面を管理
       title: 'Flutterデモ',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: BottomTabPage(), // BottomTabPageを最初のページに設定
+      home: isLogin ? BottomTabPage() : LoginPage(), // BottomTabPageを最初のページに設定
     );
   }
 }

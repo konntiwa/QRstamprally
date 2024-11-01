@@ -1,212 +1,117 @@
+// Firebase Authenticationを使用するために必要なパッケージをインポート
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:test5/main.dart';
 
-class RegiPage extends StatelessWidget {
-  const RegiPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-
-    return Scaffold(
-      body: Center(
-          child: isSmallScreen
-              ? const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _Logo(),
-              _RegistrationForm(),
-            ],
-          )
-              : Container(
-            padding: const EdgeInsets.all(32.0),
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: const Row(
-              children: [
-                Expanded(child: _Logo()),
-                Expanded(
-                  child: Center(child: _RegistrationForm()),
-                ),
-              ],
-            ),
-          )
-      ),
-    );
-  }
-}
-
-class _Logo extends StatelessWidget {
-  const _Logo({Key? key}) : super(key: key);
+// StatefulWidgetを継承したSignUpPageクラス
+// 状態が変化する（ユーザー入力を受け付ける）ため、StatefulWidgetを使用
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FlutterLogo(size: isSmallScreen ? 100 : 200),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            "Create your account",
-            textAlign: TextAlign.center,
-            style: isSmallScreen
-                ? Theme.of(context).textTheme.headlineSmall
-                : Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black),
-          ),
-        )
-      ],
-    );
-  }
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _RegistrationForm extends StatefulWidget {
-  const _RegistrationForm({Key? key}) : super(key: key);
+// SignUpPageの状態を管理するStateクラス
+class _SignUpPageState extends State<SignUpPage> {
+  // Firebase Authenticationのインスタンスを作成
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  @override
-  State<_RegistrationForm> createState() => _RegistrationFormState();
-}
+  // フォームのキー（バリデーションに使用）
+  final _formKey = GlobalKey<FormState>();
 
-class _RegistrationFormState extends State<_RegistrationForm> {
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  // テキストフィールドのコントローラー（入力値の管理に使用）
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
+  // メモリリーク防止のため、使用していないコントローラーを破棄
   @override
   void dispose() {
+    _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 300),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextFormField(
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                bool emailValid = RegExp(
-                    r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                    .hasMatch(value);
-                if (!emailValid) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                prefixIcon: Icon(Icons.email_outlined),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            _gap(),
-            TextFormField(
-              controller: _passwordController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (value.length < 8) {
-                  return 'Password must be at least 8 characters';
-                }
-                if (!value.contains(RegExp(r'[A-Z]'))) {
-                  return 'Password must contain at least one uppercase letter';
-                }
-                if (!value.contains(RegExp(r'[0-9]'))) {
-                  return 'Password must contain at least one number';
-                }
-                return null;
-              },
-              obscureText: !_isPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'Enter your password',
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                ),
-              ),
-            ),
-            _gap(),
-            TextFormField(
-              controller: _confirmPasswordController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-              obscureText: !_isConfirmPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                hintText: 'Confirm your password',
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(_isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () {
-                    setState(() {
-                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                    });
-                  },
-                ),
-              ),
-            ),
-            _gap(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4)),
-                ),
-                onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    // TODO: Implement registration logic
-                  }
-                },
-                child: const Padding(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text(
-                    'Create Account',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Scaffold(
+      body: Center(
+        child: Container(
+          // パディングとサイズ制約を設定
+          padding: const EdgeInsets.all(20),
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Form(
+            key: _formKey,  // フォームのキーを設定
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // メールアドレス入力フィールド
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'メールアドレス',
+                    border: OutlineInputBorder(),
                   ),
+                  // 入力値の検証
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'メールアドレスを入力してください';
+                    }
+                    return null;
+                  },
                 ),
-              ),
+                const SizedBox(height: 16),  // 余白
+
+                // パスワード入力フィールド
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,  // パスワードを隠す
+                  // 入力値の検証
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'パスワードを入力してください';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),  // 余白
+
+                // サインアップボタン
+                ElevatedButton(
+                  onPressed: () async {
+                    // フォームのバリデーションチェック
+                    if (_formKey.currentState!.validate()) {
+                      try {
+                        // Firebase Authenticationでユーザー登録
+                        final userCredential = await _auth.createUserWithEmailAndPassword(
+                          email: _emailController.text,
+                          password: _passwordController.text,
+                        );
+                        // 登録成功時の処理
+                        if (userCredential.user != null) {
+                          print('ユーザー登録成功');
+                          // ここに登録成功後の画面遷移などを記述
+                          Navigator.push(context,MaterialPageRoute(builder:(context)=>MyApp()));
+                        }
+                      } on FirebaseAuthException catch (e) {
+                        // エラー発生時にSnackBarでエラーメッセージを表示
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.message ?? 'エラーが発生しました')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Sign Up'),
+                ),
+              ],
             ),
-            _gap(),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Already have an account? Sign in'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-
-  Widget _gap() => const SizedBox(height: 16);
 }
