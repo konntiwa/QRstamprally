@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:test5/debug.dart';
+import 'package:test5/register.dart';
 
 // ログインページのStatefulWidget
 // StatefulWidgetを使用することで、画面上の状態（パスワードの表示/非表示など）を管理できます
@@ -72,6 +73,9 @@ class _LoginPageState extends State<LoginPage> {
                     _gap(),
 
                     // メールアドレス入力フィールド
+                    ElevatedButton(onPressed:(){
+                      Navigator.push(context, MaterialPageRoute(builder:(context)=>SignUpPage()));
+                    }, child: Text("アカウントの作成はこちらから")),
                     TextFormField(
                       controller: _emailController,
                       validator: (value) {
