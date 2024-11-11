@@ -1,6 +1,7 @@
 // Firebase Authenticationを使用するために必要なパッケージをインポート
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:test5/auth.dart';
 import 'package:test5/main.dart';
 
 // StatefulWidgetを継承したSignUpPageクラス
@@ -93,7 +94,12 @@ class _SignUpPageState extends State<SignUpPage> {
                         );
                         // 登録成功時の処理
                         if (userCredential.user != null) {
-                          print('ユーザー登録成功');
+                          await ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("ユーザー登録完了!!"),
+                              duration: Duration(seconds: 1),
+                            ),
+                          ).closed;
                           // ここに登録成功後の画面遷移などを記述
                           Navigator.push(context,MaterialPageRoute(builder:(context)=>MyApp()));
                         }
@@ -107,6 +113,11 @@ class _SignUpPageState extends State<SignUpPage> {
                   },
                   child: const Text('Sign Up'),
                 ),
+                ElevatedButton(onPressed:(){
+                  Navigator.push(context, MaterialPageRoute(builder:(context) => LoginPage()));
+                }, child: const Text(
+                  "アカウントをお持ちの方はこちらへ",
+                style: TextStyle(fontSize: 8),))
               ],
             ),
           ),

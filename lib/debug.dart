@@ -33,7 +33,7 @@ child: Text('ボタン1'),
 const SizedBox(height: 10),
 ElevatedButton(
 onPressed:(){
-  Navigator.push(context, MaterialPageRoute(builder: (context)=>StampPage()));
+  Navigator.push(context, MaterialPageRoute(builder: (context)=>const StampPage()));
 },
 child: const Text('スタンプラリーページへ'),
 ),

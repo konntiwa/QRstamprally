@@ -1,10 +1,56 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test5/debug.dart';
+import 'package:test5/main.dart';
 import 'package:test5/register.dart';
+import 'package:test5/widget/BottomTab.dart';
 
-// ログインページのStatefulWidget
-// StatefulWidgetを使用することで、画面上の状態（パスワードの表示/非表示など）を管理できます
+// UserManagementクラス：Firestoreを使用してユーザー情報を管理するためのクラス
+class UserManagement {
+  // Firestoreのインスタンスを静的フィールドとして保持
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // ユーザーデータが存在しない場合に作成するメソッド
+  static Future<void> createUserIfNotExists({
+    required String userId,    // Firebase Authenticationから取得したUID
+    required String username,
+  }) async {
+    // users コレクション内の特定のユーザーIDのドキュメントを参照
+    final userRef = _firestore.collection('users').doc(userId);
+
+    try {
+      // ドキュメントの存在確認
+      final docSnapshot = await userRef.get();
+
+      //ユーザードキュメント配下のkeyコレクションを確認
+      final keysRef = userRef.collection('keys').doc('default');
+      final keysSnapshot = await keysRef.get();
+
+
+      // ドキュメントが存在しない場合のみ新規作成
+      if (!docSnapshot.exists) {
+        await userRef.set({
+          'mail': username,
+        });
+        if (!keysSnapshot.exists) {
+          await keysRef.set({
+          });
+        }
+        print('New user data created for ID: $userId');
+      }
+
+    } catch (e) {
+      print('Error creating user data: $e');
+      rethrow;  // エラーを上位に伝播
+    }
+  }
+}
+
+
+
+// ログインページのメインウィジェット
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -13,23 +59,116 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // 画面の状態を管理する変数
-  bool _isPasswordVisible = false;  // パスワードの表示/非表示を管理
-  bool _rememberMe = true;         // Remember meチェックボックスの状態を管理
+  // UIの状態を管理する変数
+  bool _isPasswordVisible = false;  // パスワードの表示/非表示
+  bool _rememberMe = true;         // ログイン情報保存のチェックボックス
+  bool _isLoading = false;         // ローディング状態
 
   // フォームのキーとテキストフィールドのコントローラー
-  // GlobalKeyを使用してフォームの状態を管理し、バリデーションを行います
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();  // フォームのバリデーション用
   final _emailController = TextEditingController();    // メールアドレス入力用
   final _passwordController = TextEditingController(); // パスワード入力用
 
-  // コントローラーの解放
-  // メモリリークを防ぐために、ウィジェットが破棄されるときにコントローラーを解放します
+  // メモリリーク防止のためのコントローラー解放
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // エラーメッセージを表示するヘルパーメソッド
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+//sharedpreferencesを利用したrememberMeの状態保存等
+
+  Future<void> _load_setting()async {
+  final pp = await SharedPreferences.getInstance();
+  setState(() {
+    _rememberMe = pp.getBool('rememberMe') ?? false; //falseがデフォ値
+  });
+  }
+
+  Future<void> _save_setting() async{
+    final pp = await SharedPreferences.getInstance();
+    await pp.setBool('rememberMe', _rememberMe);
+  }
+
+  // ログイン処理を行うメソッド
+  Future<void> _handleLogin() async {
+    // フォームのバリデーションチェック
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    // ローディング状態を開始
+    setState(() => _isLoading = true);
+
+    try {
+      // Firebase Authenticationでログイン
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // ログイン成功時の処理
+      if (credential.user != null) {
+        // Firestoreにユーザーデータが存在しない場合は作成
+        await UserManagement.createUserIfNotExists(
+          userId: credential.user!.uid,
+          username: credential.user!.email ?? 'Anonymous',
+
+        );
+
+        // ウィジェットがまだマウントされている場合のみ画面遷移
+        if (mounted) {
+          await ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("ログインしました"),
+                duration: Duration(seconds: 1),
+              ));
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) =>  BottomTabPage()),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      // Firebase認証時のエラーハンドリング
+      String errorMessage = 'An error occurred';
+
+      // エラーコードに応じたメッセージを設定
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'メールアドレスが登録されていません。';
+          break;
+        case 'wrong-password':
+          errorMessage = 'パスワードが間違っています。';
+          break;
+        case 'invalid-email':
+          errorMessage = '無効なメールアドレスです。';
+          break;
+        case 'user-disabled':
+          errorMessage = 'このアカウントは無効になっています。';
+          break;
+        default:
+          errorMessage = 'ログインに失敗しました。もう一度お試しください。';
+      }
+
+      _showErrorSnackBar(errorMessage);
+    } catch (e) {
+      // その他の予期せぬエラーの処理
+      _showErrorSnackBar('予期せぬエラーが発生しました。');
+    } finally {
+      // ウィジェットがまだマウントされている場合のみ状態を更新
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -48,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // ロゴ表示
+                    // アプリロゴの表示
                     const FlutterLogo(size: 100),
                     _gap(),
 
@@ -56,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                        "Welcome to Flutter!",
+                        "わああああああああ",
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
@@ -72,29 +211,42 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     _gap(),
 
+                    // アカウント作成ページへの遷移ボタン
+                    ElevatedButton(
+                      // ローディング中は無効化
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignUpPage()),
+                        );
+                      },
+                      child: const Text("アカウントの作成はこちらから"),
+                    ),
+                    _gap(),
+
                     // メールアドレス入力フィールド
-                    ElevatedButton(onPressed:(){
-                      Navigator.push(context, MaterialPageRoute(builder:(context)=>SignUpPage()));
-                    }, child: Text("アカウントの作成はこちらから")),
                     TextFormField(
                       controller: _emailController,
+                      enabled: !_isLoading,  // ローディング中は入力を無効化
+                      // 入力値のバリデーション
                       validator: (value) {
-                        // メールアドレスの入力チェック
                         if (value == null || value.isEmpty) {
-                          return 'Please enter some text';
+                          return 'メールアドレスを入力してください';
                         }
                         // メールアドレスの形式チェック
                         bool emailValid = RegExp(
-                            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-                            .hasMatch(value);
+                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                        ).hasMatch(value);
                         if (!emailValid) {
-                          return 'Please enter a valid email';
+                          return '有効なメールアドレスを入力してください';
                         }
                         return null;
                       },
                       decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'Enter your email',
+                        labelText: 'メールアドレス',
+                        hintText: 'メールアドレスを入力',
                         prefixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(),
                       ),
@@ -104,128 +256,83 @@ class _LoginPageState extends State<LoginPage> {
                     // パスワード入力フィールド
                     TextFormField(
                       controller: _passwordController,
+                      enabled: !_isLoading,  // ローディング中は入力を無効化
+                      // パスワードのバリデーション
                       validator: (value) {
-                        // パスワードの入力チェック
                         if (value == null || value.isEmpty) {
-                          return 'Please enter some text';
+                          return 'パスワードを入力してください';
                         }
-                        // パスワードの長さチェック
                         if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return 'パスワードは6文字以上である必要があります';
                         }
                         return null;
                       },
-                      obscureText: !_isPasswordVisible,  // パスワードの表示/非表示を制御
+                      obscureText: !_isPasswordVisible,  // パスワードの表示/非表示
                       decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: 'Enter your password',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded),
-                          border: const OutlineInputBorder(),
-                          // パスワードの表示/非表示を切り替えるアイコンボタン
-                          suffixIcon: IconButton(
-                            icon: Icon(_isPasswordVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          )
+                        labelText: 'パスワード',
+                        hintText: 'パスワードを入力',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        border: const OutlineInputBorder(),
+                        // パスワードの表示/非表示を切り替えるボタン
+                        suffixIcon: IconButton(
+                          icon: Icon(_isPasswordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     _gap(),
 
-                    // Remember meチェックボックス
+                    // ログイン情報保存のチェックボックス
                     CheckboxListTile(
                       value: _rememberMe,
+                      enabled: !_isLoading,
                       onChanged: (value) {
                         if (value == null) return;
                         setState(() {
                           _rememberMe = value;
                         });
                       },
-                      title: const Text('Remember me'),
+                      title: const Text('ログイン情報を保存'),
                       controlAffinity: ListTileControlAffinity.leading,
                       dense: true,
                       contentPadding: const EdgeInsets.all(0),
                     ),
                     _gap(),
 
-                    // サインインボタン
+                    // ログインボタン
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4)
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        onPressed: () async {
-                          // フォームのバリデーションを実行
-                          if (_formKey.currentState?.validate() ?? false) {
-                            // ここにログイン処理を実装
-                            // 以下は実装例です：
-                            try {
-                              final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                                  email: _emailController.text,
-                                  password: _passwordController.text
-                              );
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder:(context)=>DebugPage()));
-                              //Replacementにすることで戻れなくする
-                            } on FirebaseAuthException catch (e) {
-                              if (e.code == 'user-not-found') {
-                                print('No user found for that email.');
-                              } else if (e.code == 'wrong-password') {
-                                print('Wrong password provided for that user.');
-                              }
-                            }
-
-                            // 1. ローディング表示を開始する場合:
-                            // setState(() => _isLoading = true);
-
-                            // 2. APIを使用してログイン処理を実行する場合:
-                            // try {
-                            //   final response = await loginApi.login(
-                            //     email: _emailController.text,
-                            //     password: _passwordController.text,
-                            //   );
-                            //
-                            //   if (response.success) {
-                            //     // ログイン成功時の処理
-                            //     // 例: トークンの保存
-                            //     await saveToken(response.token);
-                            //
-                            //     // ホーム画面への遷移
-                            //     Navigator.pushReplacement(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => const HomePage(),
-                            //       ),
-                            //     );
-                            //   }
-                            // } catch (e) {
-                            //   // エラー処理
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     SnackBar(content: Text(e.toString())),
-                            //   );
-                            // } finally {
-                            //   // ローディング表示を終了
-                            //   setState(() => _isLoading = false);
-                            // }
-
-                            // 現在は入力値をコンソールに出力するのみ
-                            print('Email: ${_emailController.text}');
-                            print('Password: ${_passwordController.text}');
-                          }
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.all(10.0),
-                          child: Text(
-                            'Sign in',
+                        onPressed: _isLoading ? null : _handleLogin,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          // ローディング中はプログレスインジケータを表示
+                          child: _isLoading
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : const Text(
+                            'ログイン',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
