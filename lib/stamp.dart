@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import'package:flutter/material.dart';
 
 class StampPage extends StatelessWidget {
-  const StampPage({Key? key}) : super(key: key);
+  const StampPage({Key? key,}) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,7 @@ class StampPage extends StatelessWidget {
         children: [
           // Theme Setting
           ListTile(
-            title: const Text('Dark Theme'),
+            title: Text('読み取ったQRコード:'),
             trailing: Switch(
               value: false, // Replace with actual theme state
               onChanged: (value) {

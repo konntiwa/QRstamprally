@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test5/auth.dart';
 import 'package:test5/widget/BottomTab.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,13 +12,23 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+   MyApp({super.key});
+  bool rememberMe = false;
 
-  @override
+//rememberMeを読み込んでページルートを分岐させる(Login or main)
+   Future<void> _loadRememberMeStatus() async {
+     final prefs = await SharedPreferences.getInstance();
+     final rememberMe = prefs.getBool('remember_me') ?? false;
+     // rememberMeを使用した処理
+   }
+
+
+
+   @override
   Widget build(BuildContext context) {
     final isLogin = FirebaseAuth.instance.currentUser != null;
     return MaterialApp(  //アプリ全体の画面を管理
@@ -26,7 +37,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: isLogin ? BottomTabPage() : LoginPage(), // BottomTabPageを最初のページに設定
+      home: rememberMe ? BottomTabPage() : LoginPage(), // BottomTabPageを最初のページに設定
     );
   }
 }
