@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
 //rememberMeを読み込んでページルートを分岐させる(Login or main)
    Future<void> _loadRememberMeStatus() async {
      final prefs = await SharedPreferences.getInstance();
-     final rememberMe = prefs.getBool('remember_me') ?? false;
+     final rememberMe = prefs.getBool('rememberme') ?? false;
      // rememberMeを使用した処理
    }
 

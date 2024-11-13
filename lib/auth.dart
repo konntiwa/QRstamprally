@@ -131,6 +131,7 @@ class _LoginPageState extends State<LoginPage> {
                 content: Text("ログインしました"),
                 duration: Duration(seconds: 1),
               ));
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) =>  BottomTabPage()),
@@ -163,6 +164,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       // その他の予期せぬエラーの処理
       _showErrorSnackBar('予期せぬエラーが発生しました。');
+      print(e);
     } finally {
       // ウィジェットがまだマウントされている場合のみ状態を更新
       if (mounted) {
