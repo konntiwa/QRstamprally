@@ -53,25 +53,21 @@ class _QRKeyDisplayPageState extends State<StampPage> {
 
   Widget _buildStampImage(String imagePath) {
     return Container(
-      width: 50,
-      height: 50,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.lightBlue, width: 2),
+        color: Colors.lightBlueAccent.withOpacity(0.2),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.asset(
           imagePath,
+          width: 30, // アイコンのサイズを小さく設定
+          height: 30, // アイコンのサイズを小さく設定
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            print('画像の読み込みエラー: $error');
             return Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
+              color: Colors.grey[300],
               child: const Icon(
                 Icons.error_outline,
                 color: Colors.grey,
@@ -80,6 +76,46 @@ class _QRKeyDisplayPageState extends State<StampPage> {
           },
         ),
       ),
+    );
+  }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    // TimestampからDateTimeに変換し、文字列にフォーマット
+    DateTime dateTime = timestamp.toDate();
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}:${dateTime.second.toString().padLeft(2, '0')}';
+  }
+
+  void _showStampDetail(Map<String, dynamic> stamp) {
+    // スタンプの詳細情報を表示するダイアログを表示する
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(stamp['name']),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStampImage(stamp['key']),
+              const SizedBox(height: 16),
+              Text('押された日時: ${_formatTimestamp(stamp['timestamp'])}'),
+              const SizedBox(height: 8),
+              // 詳細情報を追加することも可能
+              Text('スタンプ名: ${stamp['name']}'),
+              // 他に詳細を表示する場所
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -93,92 +129,73 @@ class _QRKeyDisplayPageState extends State<StampPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'スタンプページ',
+              'スタンプギャラリー',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Colors.lightBlue,
               ),
             ),
-            Image.asset('images/otya.png'),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '獲得したスタンプ',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${keys.length} 個',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 8),
-            ListView.builder(
+            GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, // 3x3 grid
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
               itemCount: keys.length,
               itemBuilder: (context, index) {
                 final item = keys[index];
-                final timestamp = item['timestamp'] as Timestamp?;
-                final dateStr = timestamp != null
-                    ? '${timestamp.toDate().year}/${timestamp.toDate().month}/${timestamp.toDate().day}'
-                    : '日付なし';
+                return _buildStampImage(item['key']);
+              },
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '押された日時',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.lightBlue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // スタンプギャラリーの下に日時を表示
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: keys.map((item) {
+                final timestamp = item['timestamp'];
+                final formattedDate = _formatTimestamp(timestamp);
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: ListTile(
-                    leading: _buildStampImage(item['key']),
-                    title: Text(item['name'] ?? '名称不明のスタンプ'),
-                    subtitle: Text('獲得日: $dateStr'),
-                    trailing: Text(
-                      '# ${index + 1}',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: GestureDetector(
+                    onTap: () => _showStampDetail(item),
+                    child: Card(
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            _buildStampImage(item['key']), // アイコンとしてスタンプ画像を表示
+                            const SizedBox(width: 8), // アイコンとテキストの間隔
+                            Expanded(
+                              child: Text(
+                                'スタンプ: ${item['name']} - 押された日時: $formattedDate',
+                                style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis, // 長いテキストが切れるように
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 );
-              },
+              }).toList(),
             ),
-            if (_userKeys != null && _userKeys!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    'スタンプギャラリー',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemCount: keys.length,
-                    itemBuilder: (context, index) {
-                      final item = keys[index];
-                      return _buildStampImage(item['key']);
-                    },
-                  ),
-                ],
-              ),
           ],
         ),
       ),
@@ -190,13 +207,14 @@ class _QRKeyDisplayPageState extends State<StampPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("スタンプページ"),
+        backgroundColor: Colors.lightBlue,
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _userKeys == null || _userKeys!.isEmpty
+              : (_userKeys == null || _userKeys!.isEmpty)
               ? Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
