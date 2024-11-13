@@ -138,15 +138,6 @@ class _MyHomePageState extends State<SettingPage> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    ).then((_) => _loadUserData()); // ログイン後にデータを再読み込み
-                  },
-                  child: const Text("ログインページ"),
-                ),
                 const SizedBox(height: 8),
 
                 ElevatedButton(
@@ -193,7 +184,19 @@ class _MyHomePageState extends State<SettingPage> {
                     ),
                     child: const Text("ログアウト"),
                   ),
+                ],if (_auth.currentUser == null) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                      ).then((_) => _loadUserData()); // ログイン後にデータを再読み込み
+                    },
+                    child: const Text("ログイン"),
+                  ),
                 ],
+
               ],
             ),
           ),
