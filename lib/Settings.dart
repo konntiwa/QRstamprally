@@ -15,30 +15,24 @@ class SettingPage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<SettingPage> {
-  // Firestore インスタンスの取得
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // ユーザーデータを保持する変数
   Map<String, dynamic>? userData;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // 画面表示時にユーザーデータを取得
     _loadUserData();
   }
 
-  // ユーザーデータを取得するメソッド
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
 
     try {
-      // 現在のユーザーIDを取得
       final user = _auth.currentUser;
       if (user != null) {
-        // Firestoreからユーザーデータを取得
         final docSnapshot = await _db.collection("users").doc(user.uid).get();
 
         if (docSnapshot.exists) {
@@ -60,7 +54,6 @@ class _MyHomePageState extends State<SettingPage> {
     }
   }
 
-  // ユーザーデータ表示用ウィジェット
   Widget _buildUserDataCard() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -87,19 +80,16 @@ class _MyHomePageState extends State<SettingPage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Divider(),
-            // ユーザー名の表示
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('ユーザー名'),
               subtitle: Text(userData?['username'] ?? '未設定'),
             ),
-            // 年齢の表示
             ListTile(
               leading: const Icon(Icons.calendar_today),
               title: const Text('年齢'),
               subtitle: Text('${userData?['age'] ?? '未設定'} 歳'),
             ),
-            // アカウント作成日の表示
             ListTile(
               leading: const Icon(Icons.access_time),
               title: const Text('アカウント作成日'),
@@ -120,86 +110,112 @@ class _MyHomePageState extends State<SettingPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: [
-          // データ更新ボタン
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadUserData,
-          ),
-        ],
       ),
       body: ListView(
+        padding: const EdgeInsets.all(16.0),
         children: [
-          // ユーザーデータの表示
           _buildUserDataCard(),
 
-          // 各種ボタン
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          // Account Settings Section
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Text(
+              'アカウント設定',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Card(
             child: Column(
               children: [
-                const SizedBox(height: 8),
-
-                ElevatedButton(
-                  onPressed: () {
+                ListTile(
+                  title: const Text("プロフィール編集"),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const SignUpPage()),
-                    ).then((_) => _loadUserData()); // 登録後にデータを再読み込み
+                    ).then((_) => _loadUserData());
                   },
-                  child: const Text("登録ページ"),
                 ),
-                const SizedBox(height: 8),
-
-                ElevatedButton(
-                  onPressed: () {
+                const Divider(height: 1),
+                ListTile(
+                  title: const Text("パスワード変更"),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const test1Page()),
                     );
                   },
-                  child: const Text("test1"),
                 ),
-
-
-                // ログアウトボタン
-                if (_auth.currentUser != null) ...[
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await _auth.signOut();
-                      setState(() {
-                        userData = null;
-                      });
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('ログアウトしました'),
-                            duration: Duration(seconds: 1)),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
-                    child: const Text("ログアウト"),
-                  ),
-                ],if (_auth.currentUser == null) ...[
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
-                      ).then((_) => _loadUserData()); // ログイン後にデータを再読み込み
-                    },
-                    child: const Text("ログイン"),
-                  ),
-                ],
-
               ],
             ),
           ),
+
+          // Other Settings Section
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Text(
+              'その他',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              title: const Text("アプリの使い方"),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                // アプリの使い方ページへの遷移
+              },
+            ),
+          ),
+
+          const SizedBox(height: 24.0),
+
+          // Logout Button
+          if (_auth.currentUser != null) ...[
+            ElevatedButton(
+              onPressed: () async {
+                await _auth.signOut();
+                setState(() {
+                  userData = null;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('ログアウトしました'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+              ),
+              child: const Text(
+                "ログアウト",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ] else ...[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                ).then((_) => _loadUserData());
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+              ),
+              child: const Text("ログイン"),
+            ),
+          ],
         ],
       ),
     );
