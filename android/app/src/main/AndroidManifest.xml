@@ -3,6 +3,7 @@
     <!-- ここにカメラのパーミッションを追加 -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+
     <application
         android:label="test5"
         android:name="${applicationName}"

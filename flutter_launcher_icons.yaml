@@ -1,0 +1,19 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "images/icon.png"
+  adaptive_icon_background: "#FFFFFF"  # 背景を白に設定
+  adaptive_icon_foreground: "images/icon.png"  # フォアグラウンド画像
+  min_sdk_android: 21
+  web:
+    generate: false
+    image_path: "images/icon.png"
+    background_color: "#ffffff"
+    theme_color: "#000000"
+  windows:
+    generate: false
+    image_path: "images/icon.png"
+    icon_size: 48
+  macos:
+    generate: false
+    image_path: "images/icon.png"

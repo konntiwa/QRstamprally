@@ -190,14 +190,14 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // アプリロゴの表示
-                    const FlutterLogo(size: 100),
+                    Image.asset("images/icon.png"),
                     _gap(),
 
                     // ウェルカムメッセージ
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text(
-                        "わああああああああ",
+                        "アプリ名",
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
@@ -206,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        "Enter your email and password to continue.",
+                        "emaiとパスワードを入力してください",
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
