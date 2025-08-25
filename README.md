@@ -1,6 +1,6 @@
 # test5
 
-A new Flutter project.
+学校での課題で作成しました。リリースまではしていません。
 
 ## Getting Started
 
